@@ -38,18 +38,24 @@ def search_manga(b: str):
 
     soup = BeautifulSoup(response.text, "html.parser")
     eph_num_divs = soup.find_all("span", class_="lchx")
+    eps_dw = soup.find_all("span", class_="dl")
 
     episode_list = []
-    for div in eph_num_divs:
+    for div,dw in zip(eph_num_divs,eps_dw):
+        download_elements = dw.find("a")
         link_elements = div.find("a")
         chap_elements = div.find("chapter").text
         link_href = link_elements.get("href")
-        episode_list.append({"chap": chap_elements, "url": link_href})
-        
+        download_href = download_elements.get("href")
+        words = chap_elements.split()
+        down = f"https://komikcast.net{download_href}"
+        episode_list.append({"chap": ' '.join(words), "url": link_href, "download":down})
+
     return episode_list
 
 manga_name = input("Masukkan Judul : ")
-search_hasil = search_name_manga(manga_name)
+rep = manga_name.replace(" ","+")
+search_hasil = search_name_manga(rep)
 
 if len(search_hasil) == 0:
     print("Judul Tidak Ditemukan")
@@ -57,14 +63,12 @@ else:
     for i, name in enumerate(search_hasil):
         ss = name['title']
         qq = name['url']
-        print(f"{i+1}. {ss}, {qq}")
+        print(f"{i+1}. {ss}")
 
     manga_choice_inp = int(input("\nPilih Judul (pilih pakai nomer) : "))
     manga_choice = search_hasil[manga_choice_inp - 1]
-    print(str(manga_choice['url']))
     chosen = search_manga(manga_choice['url'])
-    for i, name in enumerate(chosen):
+
+    for p, name in enumerate(reversed(chosen)):
         ss = name['chap']
-        qq = name['url']
-        print(f"{i+1}. {ss}, {qq}")
-    
+        print(f"{p+1}. Chapter {ss} \n\t Baca Online : {name['url']} \n\t Download : {name['download']}")
