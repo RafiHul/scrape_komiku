@@ -4,52 +4,67 @@ from fake_useragent import UserAgent
 
 
 def search_name_manga(x):
-    search_url = f"https://westmanga.info/?s={x}"
+    search_url = f"https://komikcast.net/?s={x}"
 
     response = requests.get(
         search_url, headers={"UserAgent": UserAgent().chrome}
     )
 
-        # Is the response ok?
     response.raise_for_status()
 
-        # parse with soup.
+    #with open("data_scrape.html",'w',encoding="utf-8") as file:
+        #file.write(response.text)
+
     soup = BeautifulSoup(response.text, "html.parser")
     manga_find_titles = soup.find_all("div", {"class": "tt"})
-    manga_find_links = soup.find_all("div", {"class": "bsx"})
+    manga_find_links = soup.find_all("div", {"class": "animposx"})
 
     lists = []
 
     for title, link in zip(manga_find_titles, manga_find_links):
-        title_text = title.get_text(strip=True)
+        title_text = title.find('h4').text
         link_a = link.find("a")
-        url_text = link_a['href']
+        url_text = link_a['href']  # Ini adalah bagian yang perlu diubah
         lists.append({"title": title_text, "url": url_text})
+
 
     return lists
 
-def search_episode_manga(episode_list):
-    request_url = f"{episode_list}"
+def search_manga(b: str):
+    request_url = f"{b}"
     
     response = requests.get(request_url, headers={"UserAgent": UserAgent().chrome})
     response.raise_for_status()
 
-    eph_num_divs = soup.find_all("div", {"class": "eph-num"})
+    soup = BeautifulSoup(response.text, "html.parser")
+    eph_num_divs = soup.find_all("span", class_="lchx")
 
     episode_list = []
     for div in eph_num_divs:
-        a_tag = div.find("a")
-        href_text = a_tag['href']
-        span_tag = div.find("span", {"class": "chapternum"})
-        chapter_num_text = span_tag.get_text(strip=True)
-        episode_list.append({"href": href_text, "chapternum": chapter_num_text})
+        link_elements = div.find("a")
+        chap_elements = div.find("chapter").text
+        link_href = link_elements.get("href")
+        episode_list.append({"chap": chap_elements, "url": link_href})
         
     return episode_list
 
-manga_name = input()
-search_manga = search_name_manga(manga_name)
+manga_name = input("Masukkan Judul : ")
+search_hasil = search_name_manga(manga_name)
 
-for i, name in enumerate(search_manga):
-    ss = name['title']
-    qq = name['url']
-    print(f"{i+1}. {ss}, {qq}")
+if len(search_hasil) == 0:
+    print("Judul Tidak Ditemukan")
+else:
+    for i, name in enumerate(search_hasil):
+        ss = name['title']
+        qq = name['url']
+        print(f"{i+1}. {ss}, {qq}")
+
+    manga_choice_inp = int(input("\nPilih Judul (pilih pakai nomer) : "))
+    manga_choice = search_hasil[manga_choice_inp - 1]
+    print(str(manga_choice['url']))
+    chosen = search_manga(manga_choice['url'])
+    for i, name in enumerate(chosen):
+        ss = name['chap']
+        qq = name['url']
+        print(f"{i+1}. {ss}, {qq}")
+    
